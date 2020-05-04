@@ -179,7 +179,7 @@ static Rectangle calculateBoundingBox(Coordinates vs[], int n)
 		if(vs[i].lon < smallLon){smallLon = vs[i].lon;}
 		if(vs[i].lon > bigLon){bigLon = vs[i].lon;}
 	}
-	return rect(coord(smallLat,bigLon), coord(bigLat,smallLon));
+	return rect(coord(bigLat,smallLon), coord(smallLat,bigLon));
 }
 
 bool insideRectangle(Coordinates c, Rectangle r)
@@ -451,17 +451,17 @@ static void commandExtrems(Cartography cartography, int n){
 		rLeft = rRight = rTop = rBottom = 0;
 		}
 		else {
-		if(cartography[rTop].edge.boundingBox.bottomRight.lat < cartography[i].edge.boundingBox.bottomRight.lat){
-			rTop = i;
-		}
-		if(cartography[rBottom].edge.boundingBox.topLeft.lat > cartography[i].edge.boundingBox.topLeft.lat){
+		if(cartography[rBottom].edge.boundingBox.bottomRight.lat > cartography[i].edge.boundingBox.bottomRight.lat){
 			rBottom = i;
 		}
-		if(cartography[rLeft].edge.boundingBox.bottomRight.lon > cartography[i].edge.boundingBox.bottomRight.lon){
-			rLeft = i;
+		if(cartography[rTop].edge.boundingBox.topLeft.lat < cartography[i].edge.boundingBox.topLeft.lat){
+			rTop = i;
 		}
-		if(cartography[rRight].edge.boundingBox.topLeft.lon < cartography[i].edge.boundingBox.topLeft.lon){
+		if(cartography[rRight].edge.boundingBox.bottomRight.lon < cartography[i].edge.boundingBox.bottomRight.lon){
 			rRight = i;
+		}
+		if(cartography[rLeft].edge.boundingBox.topLeft.lon > cartography[i].edge.boundingBox.topLeft.lon){
+			rLeft = i;
 		}
 		}
 	}
@@ -484,7 +484,7 @@ static void commandMetaData(int pos, Cartography cartography, int n){
 		}
 	}
 Rectangle r = cartography[pos].edge.boundingBox;
-		printf("{%f, %f, %f, %f}\n", r.bottomRight.lat, r.bottomRight.lon, r.topLeft.lat, r.topLeft.lon);
+		printf("{%f, %f, %f, %f}\n", r.topLeft.lat, r.topLeft.lon,r.bottomRight.lat, r.bottomRight.lon);
 }
 
 
