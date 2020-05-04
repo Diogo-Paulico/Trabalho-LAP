@@ -441,13 +441,11 @@ static void extrems(int pos, Identification id, int z, char direction){
 	showIdentification(pos, id, z); 
 	printf(" [%c]\n", direction);
 }
+
 //X 
 static void commandExtrems(Cartography cartography, int n){
 	int i = 0;
-	int rLeft;
-	int rRight;
-	int rTop;
-	int rBottom;
+	int rLeft, rRight, rTop, rBottom;
 	for (i = 0; i < n; i++ ){
 		if(i == 0){
 		rLeft = rRight = rTop = rBottom = 0;
@@ -486,7 +484,7 @@ static void commandMetaData(int pos, Cartography cartography, int n){
 		}
 	}
 Rectangle r = cartography[pos].edge.boundingBox;
-		printf("{ %f, %f, %f, %f}\n", r.bottomRight.lat, r.bottomRight.lon, r.topLeft.lat, r.topLeft.lon);
+		printf("{%f, %f, %f, %f}\n", r.bottomRight.lat, r.bottomRight.lon, r.topLeft.lat, r.topLeft.lon);
 }
 
 
