@@ -30,6 +30,35 @@ COMENTÁRIO
 
 #include "Cartography.h"
 
+typedef int Data;
+typedef struct Node *List;
+typedef struct Node {
+    Data data;
+    List next;
+} Node;
+
+static List newNode(Data val, List next)
+{
+    List n = malloc(sizeof(Node));
+    if( n == NULL )
+        return NULL;
+    n->data = val;
+    n->next = next;
+    return n;
+}
+
+List listPutAtEnd(List l, Data val)
+{
+    if( l == NULL )
+        return newNode(val, NULL);
+    else {
+        List p;
+        for( p = l ; p->next != NULL ; p = p->next ); // Stop at the last node
+        p->next = newNode(val, NULL);  // Assign to the next of the last node
+        return l;
+    }
+}
+
 /* STRING -------------------------------------- */
 
 static void showStringVector(StringVector sv, int n) {
@@ -230,6 +259,13 @@ bool insideRing(Coordinates c, Ring r)
 
 bool adjacentRings(Ring a, Ring b)
 {
+	int na, nb;
+	for(na = 0; na < a.nVertexes; na++){
+		for(nb = 0; nb < b.nVertexes; nb++){
+			if(sameCoordinates(a.vertexes[na],b.vertexes[nb]))
+				return true;
+		}
+	}
 ////// FAZER -- tem alguma coordenada comum
 	return false;
 }
@@ -282,6 +318,24 @@ bool insideParcel(Coordinates c, Parcel p)
 
 bool adjacentParcels(Parcel a, Parcel b)
 {
+	int h;
+	if(a.nHoles > 0){
+		for(h = 0; h < a.nHoles; h++){
+			if(adjacentRings(a.holes[h],b.edge))
+				return true;
+			}
+		}
+
+	if(b.nHoles > 0){
+		for(h = 0; h < b.nHoles; h++){
+			if(adjacentRings(b.holes[h],a.edge))
+				return true;
+			}
+		}
+
+	if(adjacentRings(a.edge,b.edge)){
+		return true;
+	}
 	////// FAZER - a porção de fronteira comum aparece repetida nos dois anéis envolvidos, com rigorosamente os mesmos vértices comuns. 
 	//Há só duas variações possíveis: esses vértices aparecem pela mesma ordem nos dois anéis envolvidos, ou aparecem por ordens opostas nos dois anéis envolvidos. 
 	//Repare que basta existir um vértice em comum, para as duas parcelas serem consideradas adjacentes. 
@@ -528,7 +582,42 @@ static void trip(Cartography cartography,double lat, double lon, int pos, int n)
 	printf(" %f\n", minDistance);
 }
 
+// A
+static void adjacent(int pos, Cartography cartography, int n){
+	if( !checkArgs(pos) || !checkPos(pos, n) )
+		return;
+	List firstAdj;
+	List adj;
+	int count, i, num;
+	count = i = 0;
+	for(; i < n; i++){
+		if(i != pos){
+			if(adjacentParcels(cartography[pos],cartography[i])){
+				if(count == 0){
+					adj = newNode(i, NULL);
+					firstAdj = adj;
+					count++;
+				}
+				else{
+				adj = listPutAtEnd(adj, i);
+				count++;
+				}
+			}
+		}
+	}
 
+	if(count == 0){
+		printf("NAO HA ADJACENCIAS\n");
+		return;
+	}
+
+	for(; firstAdj != NULL; firstAdj = firstAdj->next){
+		num = firstAdj->data;
+		showIdentification(num,cartography[num].identification,3);
+		printf("\n");
+	}
+	
+}
 
 // M pos
 static void commandMaximum(int pos, Cartography cartography, int n)
@@ -603,6 +692,10 @@ void interpreter(Cartography cartography, int n)
 			
 			case 'P': case 'p':
 				parcel(cartography, arg1, arg2, n);
+				break;
+
+			case 'A': case 'a':	// maximo
+				adjacent(arg1, cartography, n);
 				break;
 
 			case 'Z': case 'z':	// terminar
