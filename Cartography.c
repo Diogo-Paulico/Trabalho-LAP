@@ -184,8 +184,8 @@ static Rectangle calculateBoundingBox(Coordinates vs[], int n)
 
 bool insideRectangle(Coordinates c, Rectangle r)
 {
-	if(c.lat < r.topLeft.lat || c.lat > r.bottomRight.lat || c.lon > r.topLeft.lon
-	|| c.lon < r.bottomRight.lon )
+	if(c.lat > r.topLeft.lat || c.lat < r.bottomRight.lat || c.lon < r.topLeft.lon
+	|| c.lon > r.bottomRight.lon )
 		return false;
 	return true;
 }
@@ -256,7 +256,6 @@ static void showHeader(Identification id)
 {
 	showIdentification(-1, id, 3);
 	printf("\n");
-	//STRING ARRAY[10] PASSAR POS PARA STRING E VER STRING LEGTH?
 }
 
 static void showParcel(int pos, Parcel p, int lenght)
@@ -267,8 +266,18 @@ static void showParcel(int pos, Parcel p, int lenght)
 
 bool insideParcel(Coordinates c, Parcel p)
 {
+	if(!insideRectangle(c,p.edge.boundingBox)){
+			return false;
+	}
+	if(p.holes > 0){
+		int i;
+		for(i = 0; i < p.nHoles; i++){
+			if(insideRing(c,p.holes[i])){
+				return false;}
+		}
+	}
+		return insideRing(c,p.edge);
 ////// FAZER - se não tiber buracos é só ver se pertence ao anel, se tiver buraco, não pode estar no buraco, bounding box é useful no ultimo caso
-	return false;
 }
 
 bool adjacentParcels(Parcel a, Parcel b)
@@ -487,6 +496,20 @@ Rectangle r = cartography[pos].edge.boundingBox;
 		printf("{%f, %f, %f, %f}\n", r.topLeft.lat, r.topLeft.lon,r.bottomRight.lat, r.bottomRight.lon);
 }
 
+//P
+static void parcel(Cartography cartography, double lat, double lon, int n){
+	int i;
+	Coordinates c = coord(lat,lon);
+	for(i = 0; i < n; i++){
+		if(insideParcel(c, cartography[i])){
+			showIdentification(i, cartography[i].identification, 3);
+			printf("\n");
+			return;
+		}	
+	}
+	printf("FORA DO MAPA\n");
+	return;
+}
 
 //V
 static void trip(Cartography cartography,double lat, double lon, int pos, int n){
@@ -576,6 +599,10 @@ void interpreter(Cartography cartography, int n)
 			
 			case 'X': case 'x': //extremos
 				commandExtrems(cartography, n);
+				break;
+			
+			case 'P': case 'p':
+				parcel(cartography, arg1, arg2, n);
 				break;
 
 			case 'Z': case 'z':	// terminar
