@@ -28,6 +28,8 @@ COMENTÁRIO
 
 */
 
+#define USE_PTS true
+
 #include "Cartography.h"
 
 typedef int Data;
@@ -226,9 +228,10 @@ static Ring readRing(FILE *f)
 {
 	Ring r;
 	int i, n = readInt(f);
-	if( n > MAX_VERTEXES )
-		error("Anel demasiado extenso");
+	/*if( n > MAX_VERTEXES )
+		error("Anel demasiado extenso");*/
 	r.nVertexes = n;
+	r.vertexes = (Coordinates *) malloc ((r.nVertexes * sizeof(Coordinates)));
 	for( i = 0 ; i < n ; i++ ) {
 		r.vertexes[i] = readCoordinates(f);
 	}
@@ -278,12 +281,15 @@ static Parcel readParcel(FILE *f)
 	Parcel p;
 	p.identification = readIdentification(f);
 	int i, n = readInt(f);
-	if( n > MAX_HOLES )
-		error("Poligono com demasiados buracos");
+	/*if( n > MAX_HOLES )
+		error("Poligono com demasiados buracos");*/
 	p.edge = readRing(f);
 	p.nHoles = n;
+	if(p.nHoles > 0){
+	p.holes = (Ring *) malloc ((p.nHoles * sizeof(Ring)));
 	for( i = 0 ; i < n ; i++ ) {
 		p.holes[i] = readRing(f);
+	}
 	}
 	return p;
 }
@@ -353,10 +359,11 @@ int loadCartography(String fileName, Cartography *cartography)
 	if( f == NULL )
 		error("Impossivel abrir ficheiro");
 	int n = readInt(f);
-	if( n > MAX_PARCELS )
-		error("Demasiadas parcelas no ficheiro");
+	*cartography = (Parcel*) malloc((n * sizeof(Parcel)));
+	/*if( n > MAX_PARCELS )
+		error("Demasiadas parcelas no ficheiro");*/
 	for( i = 0 ; i < n ; i++ ) {
-		(*cartography)[i] = readParcel(f);
+		((Parcel *)cartography)[i] = readParcel(f);
 	}
 	fclose(f);
 	return n;
