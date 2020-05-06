@@ -534,6 +534,33 @@ static void commandExtrems(Cartography cartography, int n){
 	extrems( rLeft, cartography[rLeft].identification, 3, 'W');
 }
 
+static void showParcelPersonalized(int pos, Parcel p, int lenght, int z){
+	showIdentification(pos, p.identification, z);
+	showValue(lenght);
+}
+
+//Q
+static void commandHowMany( int pos, Cartography cartography, int n){
+	int i = 0;
+	int nfreg = 0;
+	int ncount = 0;
+	int ndistrict = 0; 
+	for(i = 0; i < n; i++){
+		if(strcmp(cartography[pos].identification.freguesia,cartography[i].identification.freguesia) == 0 ){
+			nfreg++;
+		}
+		if(strcmp(cartography[pos].identification.concelho,cartography[i].identification.concelho) == 0 ){
+			ncount = ncount + 1;
+		}	
+		if(strcmp(cartography[pos].identification.distrito,cartography[i].identification.distrito) == 0 ){
+			ndistrict++;
+		}
+	}
+	showParcelPersonalized(pos, cartography[pos],nfreg, 3);
+	showParcelPersonalized(pos, cartography[pos],ncount, 2);
+	showParcelPersonalized(pos, cartography[pos],ndistrict, 1);
+	}
+
 //R
 static void commandMetaData(int pos, Cartography cartography, int n){
 	if( !checkArgs(pos) || !checkPos(pos, n) )
@@ -684,6 +711,10 @@ void interpreter(Cartography cartography, int n)
 			
 			case 'D': case 'd': //distritos
 				commandListDistricts(cartography, n);
+				break;
+			
+			case 'Q': case 'q': //Quantos
+				commandHowMany(arg1,cartography,n);
 				break;
 			
 			case 'X': case 'x': //extremos
