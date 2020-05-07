@@ -187,8 +187,8 @@ double haversine(Coordinates c1, Coordinates c2)
 
 Rectangle rect(Coordinates tl, Coordinates br)
 {
-	Rectangle rect = {tl, br};
-	return rect;
+	Rectangle r = {tl, br};
+	return r;
 }
 
 static void showRectangle(Rectangle r)
