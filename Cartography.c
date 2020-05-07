@@ -581,7 +581,7 @@ static void commandMetaData(int pos, Cartography cartography, int n){
 		}
 	}
 Rectangle r = cartography[pos].edge.boundingBox;
-		printf("{%f, %f, %f, %f}\n", r.topLeft.lat, r.topLeft.lon,r.bottomRight.lat, r.bottomRight.lon);
+	showRectangle(r);
 }
 
 //P
@@ -672,13 +672,15 @@ static void commandMaximum(int pos, Cartography cartography, int n)
 			parcelPos = currentPos;
 		}
 		if(cartography[currentPos].nHoles > 0){
-			int i = cartography[currentPos].nHoles - 1;
-			for(; i >= 0 ; i--){
-				if(cartography[currentPos].holes[i].nVertexes > maxVert){
-					  maxVert = cartography[currentPos].holes[i].nVertexes;
+			int count = 0;
+			for(int i = 0; i < cartography[currentPos].nHoles ; i++){
+				count += cartography[currentPos].holes[i].nVertexes;
+			}
+			count += cartography[currentPos].edge.nVertexes;
+			if(count > maxVert){
+					  maxVert = count;
 					  parcelPos = currentPos;
 				}
-			}
 		}
 		currentPos++;
 	}
