@@ -319,7 +319,7 @@ bool insideParcel(Coordinates c, Parcel p)
 		}
 	}
 		return insideRing(c,p.edge);
-////// FAZER - se não tiber buracos é só ver se pertence ao anel, se tiver buraco, não pode estar no buraco, bounding box é useful no ultimo caso
+
 }
 
 bool adjacentParcels(Parcel a, Parcel b)
@@ -342,9 +342,6 @@ bool adjacentParcels(Parcel a, Parcel b)
 	if(adjacentRings(a.edge,b.edge)){
 		return true;
 	}
-	////// FAZER - a porção de fronteira comum aparece repetida nos dois anéis envolvidos, com rigorosamente os mesmos vértices comuns. 
-	//Há só duas variações possíveis: esses vértices aparecem pela mesma ordem nos dois anéis envolvidos, ou aparecem por ordens opostas nos dois anéis envolvidos. 
-	//Repare que basta existir um vértice em comum, para as duas parcelas serem consideradas adjacentes. 
 		return false;
 }
 
@@ -363,8 +360,8 @@ int loadCartography(String fileName, Cartography *cartography)
 	/*if( n > MAX_PARCELS )
 		error("Demasiadas parcelas no ficheiro");*/
 	for( i = 0 ; i < n ; i++ ) {
-		(*cartography)[i] = readParcel(f); //((Parcel*)cartography) for testing (*cartography) for mooshak
-		//((Parcel*)cartography)[i] = readParcel(f);
+		//(*cartography)[i] = readParcel(f); //((Parcel*)cartography) for testing (*cartography) for mooshak
+		((Parcel*)cartography)[i] = readParcel(f);
 	}
 	fclose(f);
 	return n;
@@ -522,16 +519,20 @@ static void commandExtrems(Cartography cartography, int n){
 		rLeft = rRight = rTop = rBottom = 0;
 		}
 		else {
-		if(cartography[rBottom].edge.boundingBox.bottomRight.lat > cartography[i].edge.boundingBox.bottomRight.lat){
+		if(cartography[rBottom].edge.boundingBox.bottomRight.lat > 
+		cartography[i].edge.boundingBox.bottomRight.lat){
 			rBottom = i;
 		}
-		if(cartography[rTop].edge.boundingBox.topLeft.lat < cartography[i].edge.boundingBox.topLeft.lat){
+		if(cartography[rTop].edge.boundingBox.topLeft.lat < 
+		cartography[i].edge.boundingBox.topLeft.lat){
 			rTop = i;
 		}
-		if(cartography[rRight].edge.boundingBox.bottomRight.lon < cartography[i].edge.boundingBox.bottomRight.lon){
+		if(cartography[rRight].edge.boundingBox.bottomRight.lon < 
+		cartography[i].edge.boundingBox.bottomRight.lon){
 			rRight = i;
 		}
-		if(cartography[rLeft].edge.boundingBox.topLeft.lon > cartography[i].edge.boundingBox.topLeft.lon){
+		if(cartography[rLeft].edge.boundingBox.topLeft.lon > 
+		cartography[i].edge.boundingBox.topLeft.lon){
 			rLeft = i;
 		}
 		}
@@ -555,14 +556,14 @@ static void commandHowMany( int pos, Cartography cartography, int n){
 	int nfreg = 0;
 	int ncount = 0;
 	int ndistrict = 0; 
-	for(i = 0; i < n; i++){
-		if(strcmp(cartography[pos].identification.freguesia,cartography[i].identification.freguesia) == 0 ){
+for(i = 0; i < n; i++){
+if(strcmp(cartography[pos].identification.freguesia,cartography[i].identification.freguesia)== 0){
 			nfreg++;
 		}
-		if(strcmp(cartography[pos].identification.concelho,cartography[i].identification.concelho) == 0 ){
+	if(strcmp(cartography[pos].identification.concelho,cartography[i].identification.concelho)==0){
 			ncount = ncount + 1;
 		}	
-		if(strcmp(cartography[pos].identification.distrito,cartography[i].identification.distrito) == 0 ){
+	if(strcmp(cartography[pos].identification.distrito,cartography[i].identification.distrito)==0){
 			ndistrict++;
 		}
 	}
