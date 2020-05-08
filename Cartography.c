@@ -231,7 +231,7 @@ static Ring readRing(FILE *f)
 	/*if( n > MAX_VERTEXES )
 		error("Anel demasiado extenso");*/
 	r.nVertexes = n;
-	r.vertexes = (Coordinates *) malloc ((r.nVertexes * sizeof(Coordinates)));
+	r.vertexes = malloc ((r.nVertexes * sizeof(Coordinates)));
 	for( i = 0 ; i < n ; i++ ) {
 		r.vertexes[i] = readCoordinates(f);
 	}
@@ -286,7 +286,7 @@ static Parcel readParcel(FILE *f)
 	p.edge = readRing(f);
 	p.nHoles = n;
 	if(p.nHoles > 0){
-	p.holes = (Ring *) malloc ((p.nHoles * sizeof(Ring)));
+	p.holes = malloc ((p.nHoles * sizeof(Ring)));
 	for( i = 0 ; i < n ; i++ ) {
 		p.holes[i] = readRing(f);
 	}
@@ -359,11 +359,12 @@ int loadCartography(String fileName, Cartography *cartography)
 	if( f == NULL )
 		error("Impossivel abrir ficheiro");
 	int n = readInt(f);
-	*cartography = (Parcel*) malloc((n * sizeof(Parcel)));
+	*cartography = malloc((n * sizeof(Parcel)));
 	/*if( n > MAX_PARCELS )
 		error("Demasiadas parcelas no ficheiro");*/
 	for( i = 0 ; i < n ; i++ ) {
-		((Parcel *)cartography)[i] = readParcel(f);
+		(*cartography)[i] = readParcel(f); //((Parcel*)cartography) for testing (*cartography) for mooshak
+		//((Parcel*)cartography)[i] = readParcel(f);
 	}
 	fclose(f);
 	return n;
@@ -548,6 +549,8 @@ static void showParcelPersonalized(int pos, Parcel p, int lenght, int z){
 
 //Q
 static void commandHowMany( int pos, Cartography cartography, int n){
+	if( !checkArgs(pos) || !checkPos(pos, n) )
+		return;
 	int i = 0;
 	int nfreg = 0;
 	int ncount = 0;
@@ -573,15 +576,16 @@ static void commandMetaData(int pos, Cartography cartography, int n){
 	if( !checkArgs(pos) || !checkPos(pos, n) )
 		return;
 	showIdentification(pos, cartography[pos].identification, 3);
-	printf("\n     %d ", cartography[pos].edge.nVertexes);
+	printf("\n     %d ", cartography[pos].edge.nVertexes);
 	if(cartography[pos].nHoles > 0){
-		int i = cartography[pos].nHoles - 1;
-		for(; i >= 0; i--){
+		int i;
+		for(i = 0; i < cartography[pos].nHoles; i++){
 			printf("%d ", cartography[pos].holes[i].nVertexes);	
 		}
 	}
 Rectangle r = cartography[pos].edge.boundingBox;
 	showRectangle(r);
+	printf("\n");
 }
 
 //P
@@ -616,13 +620,10 @@ static void trip(Cartography cartography,double lat, double lon, int pos, int n)
 	printf(" %f\n", minDistance);
 }
 
-// A
-static void adjacent(int pos, Cartography cartography, int n){
-	if( !checkArgs(pos) || !checkPos(pos, n) )
-		return;
+static List adjacentAux(int pos, Cartography cartography, int n){
 	List firstAdj;
 	List adj;
-	int count, i, num;
+	int count, i;
 	count = i = 0;
 	for(; i < n; i++){
 		if(i != pos){
@@ -639,8 +640,19 @@ static void adjacent(int pos, Cartography cartography, int n){
 			}
 		}
 	}
-
 	if(count == 0){
+		return NULL;
+	}
+	return firstAdj;
+}
+
+// A
+static void adjacent(int pos, Cartography cartography, int n){
+	if( !checkArgs(pos) || !checkPos(pos, n) )
+		return;
+	int num;
+	List firstAdj = adjacentAux(pos, cartography, n);
+	if(firstAdj == NULL){
 		printf("NAO HA ADJACENCIAS\n");
 		return;
 	}
@@ -651,6 +663,43 @@ static void adjacent(int pos, Cartography cartography, int n){
 		printf("\n");
 	}
 	
+}
+
+// F
+static void borders(Cartography cartography, int pos1, int pos2, int n){
+	
+	if( !checkArgs(pos1)  || !checkPos(pos1, n) || !checkArgs(pos2)  || !checkPos(pos2, n))
+		return;
+	
+	if(pos1 == pos2){
+		printf(" 0\n");
+		return;
+	}
+	List queue = NULL;
+	int current = 0;
+	queue = listPutAtEnd(queue, pos1);
+	List first = queue;
+	int distances[n];
+	for(int i = 0; i < n; i++){
+		distances[i] = -1;
+	}
+	distances[pos1] = 0;
+	while(distances[pos2] == -1 && first != NULL){
+		current = first->data;
+		List adj = adjacentAux(current, cartography,n);
+		for(;adj != NULL; adj = adj->next){
+			if(distances[adj->data] == -1){
+				distances[adj->data] = distances[current] + 1;
+				queue = listPutAtEnd(queue, adj->data);
+			}
+		}
+		first = first->next;
+	}
+	if(distances[pos2] == -1){
+		printf("NAO HA CAMINHO\n");
+		return;
+	}
+	printf(" %d\n", distances[pos2]);
 }
 
 // M pos
@@ -736,6 +785,10 @@ void interpreter(Cartography cartography, int n)
 
 			case 'A': case 'a':	// maximo
 				adjacent(arg1, cartography, n);
+				break;
+
+			case 'F': case 'f':
+				borders(cartography, arg1, arg2, n);
 				break;
 
 			case 'Z': case 'z':	// terminar
