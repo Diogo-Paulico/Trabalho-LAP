@@ -742,8 +742,18 @@ static bool checkPartitionDist(Cartography cartography, ListOfPartions list, int
 
 static void printPartitions(ListOfPartions list){
 	for(; list !=NULL; list = list->next){
-		for(;list->data !=NULL; list->data = list->data->next){
-			printf(" %d", list->data->data);
+		printf(" ");
+		int start = list->data->data;
+		int current = start;
+		int counter = 0;		
+		for(list->data = list->data->next ;list->data !=NULL; list->data = list->data->next){
+			if(list->data->data == current + 1){
+				current++;
+			}
+			else {
+				printf("%d-%d", start, current);
+
+			}
 		}
 		printf("\n");
 	}
