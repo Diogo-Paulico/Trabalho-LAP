@@ -76,8 +76,7 @@ static ListOfPartions newPartition (int pos, ListOfPartions next)
 }
 
 static ListOfPartions addParcelToPartition(int pos, ListOfPartions list){
-	List data = list->data;
-	data = listPutAtEnd(list->data, pos);
+	list->data = listPutAtEnd(list->data, pos);
 	return list;
 }
 
@@ -89,7 +88,7 @@ static ListOfPartions partitionAddEnd(int pos, ListOfPartions list){
 		ListOfPartions p;
 		for(p = list; p->next != NULL; p = p->next);
 		p->next = newPartition(pos, NULL);
-		return list;
+		return p->next;
 	}
 }
 
@@ -456,41 +455,43 @@ static void sortCountie(String aux[], int n) {
     qsort(aux, n, sizeof(String), compareCounties);
 }
 
+static bool notInArray(String text, String array[], int n ){
+	for(int i = 0; i < n; i++){
+		if(strcmp(text, array[i]) == 0){
+			return false;
+		}
+	}
+	return true;
+}
+
 // C
 static void commandListCounties(Cartography cartography, int n)
 {
 	int i = 0;
 	String last;
+	String all[n];
 	int b = 0;
 	for(i = 0; i < n; i++){
 		if(i == 0){ 
+			strcpy(all[b], cartography[i].identification.concelho);
 			b++;
 			strcpy(last, cartography[i].identification.concelho);
 		} else{
-			if(strcmp(cartography[i].identification.concelho, last) != 0){
+			if(strcmp(cartography[i].identification.concelho, last) != 0 || notInArray(cartography[i].identification.concelho, all, b)){
+				strcpy(all[b], cartography[i].identification.concelho);
 				b++;
 				strcpy(last, cartography[i].identification.concelho);
 			}
 		}
 	}
 	String counties[b];
-	int c = 0;
-	for(i = 0; i < n; i++){
-		if(i == 0){ 
-			strcpy(counties[c], cartography[i].identification.concelho);
-			strcpy(last, cartography[i].identification.concelho);
-			c++;
-		} else{
-			if(strcmp(cartography[i].identification.concelho, last) != 0){
-				strcpy(counties[c], cartography[i].identification.concelho);
-				strcpy(last, cartography[i].identification.concelho);
-				c++;
-			}
-		}
+	for(int i = 0; i < b; i++){
+		strcpy(counties[i], all[i]);
 	}
+
 	 sortCountie(counties, b);
 	 showStringVector(counties, b);
-	}
+}
 
 
 static int compareDistricts(const void * a, const void * b) {
@@ -506,33 +507,26 @@ static void commandListDistricts(Cartography cartography, int n)
 {
 	int i = 0;
 	String last;
+	String all[n];
 	int b = 0;
 	for(i = 0; i < n; i++){
 		if(i == 0){ 
+			strcpy(all[b], cartography[i].identification.distrito);
 			b++;
 			strcpy(last, cartography[i].identification.distrito);
 		} else{
-			if(strcmp(cartography[i].identification.distrito, last) != 0){
+			if(strcmp(cartography[i].identification.distrito, last) != 0 || notInArray(cartography[i].identification.distrito, all, b)){
+				strcpy(all[b], cartography[i].identification.distrito);
 				b++;
 				strcpy(last, cartography[i].identification.distrito);
 			}
 		}
 	}
 	String districts[b];
-	int c = 0;
-	for(i = 0; i < n; i++){
-		if(i == 0){ 
-			strcpy(districts[c], cartography[i].identification.distrito);
-			strcpy(last, cartography[i].identification.distrito);
-			c++;
-		} else{
-			if(strcmp(cartography[i].identification.distrito, last) != 0){
-				strcpy(districts[c], cartography[i].identification.distrito);
-				strcpy(last, cartography[i].identification.distrito);
-				c++;
-			}
-		}
+	for(int i = 0; i < b; i++){
+		strcpy(districts[i], all[i]);
 	}
+
 	 sortDistricts(districts, b);
 	 showStringVector(districts, b);
 	}
@@ -737,8 +731,9 @@ static void borders(Cartography cartography, int pos1, int pos2, int n){
 
 static bool checkPartitionDist(Cartography cartography, ListOfPartions list, int pos, double di){
 	bool foundSmaller = false;
-		for(; list->data != NULL; list->data = list->data->next){
-			if(haversine(cartography[list->data->data].edge.vertexes[0], cartography[pos].edge.vertexes[0]) <= di){
+		List tempData = list->data;
+		for(; tempData != NULL; tempData = tempData->next){
+			if(haversine(cartography[tempData->data].edge.vertexes[0], cartography[pos].edge.vertexes[0]) <= di){
 				return true;
 		}
 	}
@@ -754,6 +749,7 @@ static void printPartitions(ListOfPartions list){
 	}
 }
 
+
 // T
 static void partitions(double distance, Cartography cartography, int n){
 	if(n > 0){
@@ -761,23 +757,27 @@ static void partitions(double distance, Cartography cartography, int n){
 		for(int b = 0; b < n; b++){
 			bitmap[b] = 0;
 		}
-		ListOfPartions first = newPartition(0, NULL);
+		ListOfPartions list = newPartition(0, NULL);
+		ListOfPartions first = list;
 		bitmap[0] = 1;
 		for(int i = 1; i < n; i++){
-			ListOfPartions oldFirst = first;
-			for(; first != NULL; first = first->next){
-				if(checkPartitionDist(cartography, first, i, distance)){
+			for(; list->next != NULL; list = list->next){
+				if(checkPartitionDist(cartography, list, i, distance)){
 					bitmap[i] = 1;
-					first = addParcelToPartition(i, first);
+					list = addParcelToPartition(i, list);
 			}
 		}
+		if(checkPartitionDist(cartography, list, i, distance)){
+					bitmap[i] = 1;
+					list = addParcelToPartition(i, list);
+			}
 		if(bitmap[i] == 0){
-			first = partitionAddEnd(i, first);
+			list = partitionAddEnd(i, list);
 			bitmap[i] = 1;
 		}
-		first = oldFirst;
+		list = first;
 	}
-	printPartitions(first);
+	printPartitions(list);
 	}
 
 }
@@ -843,27 +843,27 @@ void interpreter(Cartography cartography, int n)
 				commandMetaData(arg1, cartography, n);
 				break;
 
-			case 'C': case 'c': //concelhos 
+			case 'C': case 'c': 
 				commandListCounties(cartography, n);
 				break;
 			
-			case 'D': case 'd': //distritos
+			case 'D': case 'd': 
 				commandListDistricts(cartography, n);
 				break;
 			
-			case 'Q': case 'q': //Quantos
+			case 'Q': case 'q': 
 				commandHowMany(arg1,cartography,n);
 				break;
 			
-			case 'X': case 'x': //extremos
+			case 'X': case 'x': 
 				commandExtrems(cartography, n);
 				break;
 			
-			case 'P': case 'p':
+			case 'P': case 'p': 
 				parcel(cartography, arg1, arg2, n);
 				break;
 
-			case 'A': case 'a':	// maximo
+			case 'A': case 'a':	
 				adjacent(arg1, cartography, n);
 				break;
 
@@ -871,11 +871,11 @@ void interpreter(Cartography cartography, int n)
 				borders(cartography, arg1, arg2, n);
 				break;
 
-			case 'T': case 't':	// maximo
+			case 'T': case 't':	
 				partitions(arg1, cartography, n);
 				break;
 
-			case 'Z': case 'z':	// terminar
+			case 'Z': case 'z':	
 				printf("Fim de execucao! Volte sempre.\n");
 				return;
 
