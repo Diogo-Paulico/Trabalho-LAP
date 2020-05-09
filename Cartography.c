@@ -33,11 +33,19 @@ COMENTÁRIO
 #include "Cartography.h"
 
 typedef int Data;
+typedef List PartitionParcels;
 typedef struct Node *List;
+typedef struct PartitionNode *ListOfPartions;
 typedef struct Node {
     Data data;
     List next;
 } Node;
+
+typedef struct PartitionNode {
+    PartitionParcels data;
+	int *bitmap;
+    ListOfPartions next;
+} PartitionNode;
 
 static List newNode(Data val, List next)
 {
@@ -49,7 +57,38 @@ static List newNode(Data val, List next)
     return n;
 }
 
-List listPutAtEnd(List l, Data val)
+static ListOfPartions newPartition (int pos, ListOfPartions next, int n)
+{
+	ListOfPartions new = malloc(sizeof(PartitionNode));
+	int *bit = malloc(sizeof(int) * n);
+	new->bitmap = bit;
+	for(int i = 0; i < n; i++){
+		new->bitmap[i] = 0;
+	}
+	new->data = newNode(pos, NULL);
+	new->next = next; 
+	return new;
+}
+
+static ListOfPartions addParcelToPartition(int pos, ListOfPartions list){
+	list->bitmap[pos] = 1;
+	list->data = listPutAtEnd(list->data, pos);
+	return list;
+}
+
+static ListOfPartions partitionAddEnd(int pos, ListOfPartions list, int n){
+	if(list == NULL){
+		return newPartition(pos, NULL, n);
+	}
+	else{
+		ListOfPartions p;
+		for(p = list; p->next != NULL; p = p->next);
+		p->next = newPartition(pos, NULL, n);
+		return list;
+	}
+}
+
+static List listPutAtEnd(List l, Data val)
 {
     if( l == NULL )
         return newNode(val, NULL);
@@ -360,8 +399,8 @@ int loadCartography(String fileName, Cartography *cartography)
 	/*if( n > MAX_PARCELS )
 		error("Demasiadas parcelas no ficheiro");*/
 	for( i = 0 ; i < n ; i++ ) {
-		//(*cartography)[i] = readParcel(f); //((Parcel*)cartography) for testing (*cartography) for mooshak
-		((Parcel*)cartography)[i] = readParcel(f);
+		(*cartography)[i] = readParcel(f); 
+		//((Parcel*)cartography)[i] = readParcel(f);
 	}
 	fclose(f);
 	return n;
@@ -701,6 +740,12 @@ static void borders(Cartography cartography, int pos1, int pos2, int n){
 		return;
 	}
 	printf(" %d\n", distances[pos2]);
+}
+
+// T
+static void partitions(double distance, Cartography cartography, int n){
+
+
 }
 
 // M pos
