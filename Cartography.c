@@ -42,7 +42,6 @@ typedef struct Node {
 
 typedef struct PartitionNode {
     List data;
-	int *bitmap;
     ListOfPartions next;
 } PartitionNode;
 
@@ -56,38 +55,6 @@ static List newNode(Data val, List next)
     return n;
 }
 
-static ListOfPartions newPartition (int pos, ListOfPartions next, int n)
-{
-	ListOfPartions new = malloc(sizeof(PartitionNode));
-	int *bit = malloc(sizeof(int) * n);
-	new->bitmap = bit;
-	for(int i = 0; i < n; i++){
-		new->bitmap[i] = 0;
-	}
-	new->data = newNode(pos, NULL);
-	new->bitmap[pos] = 1;
-	new->next = next; 
-	return new;
-}
-
-static ListOfPartions addParcelToPartition(int pos, ListOfPartions list){
-	list->bitmap[pos] = 1;
-	list->data = listPutAtEnd(list->data, pos);
-	return list;
-}
-
-static ListOfPartions partitionAddEnd(int pos, ListOfPartions list, int n){
-	if(list == NULL){
-		return newPartition(pos, NULL, n);
-	}
-	else{
-		ListOfPartions p;
-		for(p = list; p->next != NULL; p = p->next);
-		p->next = newPartition(pos, NULL, n);
-		return list;
-	}
-}
-
 static List listPutAtEnd(List l, Data val)
 {
     if( l == NULL )
@@ -98,6 +65,32 @@ static List listPutAtEnd(List l, Data val)
         p->next = newNode(val, NULL);  // Assign to the next of the last node
         return l;
     }
+}
+
+static ListOfPartions newPartition (int pos, ListOfPartions next)
+{
+	ListOfPartions new = malloc(sizeof(PartitionNode));
+	new->data = newNode(pos, NULL);
+	new->next = next; 
+	return new;
+}
+
+static ListOfPartions addParcelToPartition(int pos, ListOfPartions list){
+	List data = list->data;
+	data = listPutAtEnd(list->data, pos);
+	return list;
+}
+
+static ListOfPartions partitionAddEnd(int pos, ListOfPartions list){
+	if(list == NULL){
+		return newPartition(pos, NULL);
+	}
+	else{
+		ListOfPartions p;
+		for(p = list; p->next != NULL; p = p->next);
+		p->next = newPartition(pos, NULL);
+		return list;
+	}
 }
 
 /* STRING -------------------------------------- */
@@ -399,8 +392,8 @@ int loadCartography(String fileName, Cartography *cartography)
 	/*if( n > MAX_PARCELS )
 		error("Demasiadas parcelas no ficheiro");*/
 	for( i = 0 ; i < n ; i++ ) {
-		(*cartography)[i] = readParcel(f); 
-		//((Parcel*)cartography)[i] = readParcel(f);
+		//(*cartography)[i] = readParcel(f); 
+		((Parcel*)cartography)[i] = readParcel(f);
 	}
 	fclose(f);
 	return n;
@@ -742,34 +735,49 @@ static void borders(Cartography cartography, int pos1, int pos2, int n){
 	printf(" %d\n", distances[pos2]);
 }
 
-static void checkPartitionDist(Cartography cartography, ListOfPartions list, int pos, double di){
+static bool checkPartitionDist(Cartography cartography, ListOfPartions list, int pos, double di){
 	bool foundSmaller = false;
-	for(; list != NULL; list = list->next){
 		for(; list->data != NULL; list->data = list->data->next){
 			if(haversine(cartography[list->data->data].edge.vertexes[0], cartography[pos].edge.vertexes[0]) <= di){
-				foundSmaller = true;
-			}
+				return true;
 		}
 	}
+	return foundSmaller;
 }
 
+static void printPartitions(ListOfPartions list){
+	for(; list !=NULL; list = list->next){
+		for(;list->data !=NULL; list->data = list->data->next){
+			printf(" %d", list->data->data);
+		}
+		printf("\n");
+	}
+}
 
 // T
 static void partitions(double distance, Cartography cartography, int n){
 	if(n > 0){
-		ListOfPartions list = newPartition(0, NULL, n);
+		int bitmap[n];
+		for(int b = 0; b < n; b++){
+			bitmap[b] = 0;
+		}
+		ListOfPartions first = newPartition(0, NULL);
+		bitmap[0] = 1;
 		for(int i = 1; i < n; i++){
-			if(checkPartitionDist){
-				list->bitmap[i] = 1;
-				list->data->data = listPutAtEnd(list->data->data, i);
+			ListOfPartions oldFirst = first;
+			for(; first != NULL; first = first->next){
+				if(checkPartitionDist(cartography, first, i, distance)){
+					bitmap[i] = 1;
+					first = addParcelToPartition(i, first);
 			}
 		}
-	
-	
-	
-	
-	
-	
+		if(bitmap[i] == 0){
+			first = partitionAddEnd(i, first);
+			bitmap[i] = 1;
+		}
+		first = oldFirst;
+	}
+	printPartitions(first);
 	}
 
 }
@@ -861,6 +869,10 @@ void interpreter(Cartography cartography, int n)
 
 			case 'F': case 'f':
 				borders(cartography, arg1, arg2, n);
+				break;
+
+			case 'T': case 't':	// maximo
+				partitions(arg1, cartography, n);
 				break;
 
 			case 'Z': case 'z':	// terminar
