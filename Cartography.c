@@ -23,8 +23,15 @@ IDENTIFICAÇÃO DOS AUTORES
 
 COMENTÁRIO
 
- Coloque aqui a identificação do grupo, mais os seus comentários, como
- se pede no enunciado.
+We use two for loops in the command D, the first one to know how many different districts we have
+and the second one to save all those districts.
+We ended up using the same squeme for the command C.
+In the command F we use the command A to detect all the adjacent parcels to the first position,
+if none of them matches the second position we verifie each one of those new pos, 
+and there adjacent parcel and recheck if they match until we get a match.
+
+Coloque aqui a identificação do grupo, mais os seus comentários, como
+se pede no enunciado.
 
 */
 
@@ -441,7 +448,7 @@ static bool checkPos(int pos, int n)
 	}
 }
 
-// L
+//L
 static void commandListCartography(Cartography cartography, int n)
 {
 	showCartography(cartography, n);
