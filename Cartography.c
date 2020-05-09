@@ -33,7 +33,6 @@ COMENTÁRIO
 #include "Cartography.h"
 
 typedef int Data;
-typedef List PartitionParcels;
 typedef struct Node *List;
 typedef struct PartitionNode *ListOfPartions;
 typedef struct Node {
@@ -42,7 +41,7 @@ typedef struct Node {
 } Node;
 
 typedef struct PartitionNode {
-    PartitionParcels data;
+    List data;
 	int *bitmap;
     ListOfPartions next;
 } PartitionNode;
@@ -66,6 +65,7 @@ static ListOfPartions newPartition (int pos, ListOfPartions next, int n)
 		new->bitmap[i] = 0;
 	}
 	new->data = newNode(pos, NULL);
+	new->bitmap[pos] = 1;
 	new->next = next; 
 	return new;
 }
@@ -742,9 +742,35 @@ static void borders(Cartography cartography, int pos1, int pos2, int n){
 	printf(" %d\n", distances[pos2]);
 }
 
+static void checkPartitionDist(Cartography cartography, ListOfPartions list, int pos, double di){
+	bool foundSmaller = false;
+	for(; list != NULL; list = list->next){
+		for(; list->data != NULL; list->data = list->data->next){
+			if(haversine(cartography[list->data->data].edge.vertexes[0], cartography[pos].edge.vertexes[0]) <= di){
+				foundSmaller = true;
+			}
+		}
+	}
+}
+
+
 // T
 static void partitions(double distance, Cartography cartography, int n){
-
+	if(n > 0){
+		ListOfPartions list = newPartition(0, NULL, n);
+		for(int i = 1; i < n; i++){
+			if(checkPartitionDist){
+				list->bitmap[i] = 1;
+				list->data->data = listPutAtEnd(list->data->data, i);
+			}
+		}
+	
+	
+	
+	
+	
+	
+	}
 
 }
 
